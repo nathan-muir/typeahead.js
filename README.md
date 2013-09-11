@@ -17,7 +17,7 @@ Other methods:
 * [Download zipball of latest release][zipball].
 * Download latest *[typeahead.js][typeahead.js]* or *[typeahead.min.js][typeahead.min.js]*.
 
-**Note:** typeahead.js has a dependency on [jQuery][jquery] 1.9+, it must be loaded before *typeahead.js*.
+**Note:** typeahead.js has a dependency on [jQuery][jquery] 1.9+, which must be loaded before *typeahead.js*.
 
 Examples
 --------
@@ -83,6 +83,10 @@ $('input.typeahead-devs').typeahead({
 $('input.typeahead-devs').typeahead('destroy');
 ```
 
+#### jQuery#typeahead('setQuery', query)
+
+Sets the current query of the typeahead. This is always preferable to using `$("input.typeahead").val(query)`, which will result in unexpected behavior. To clear the query, simply set it to an empty string.
+
 ### Dataset
 
 A dataset is an object that defines a set of data that hydrates suggestions. Typeaheads can be backed by multiple datasets. Given a query, a typeahead instance will inspect its backing datasets and display relevant suggestions to the end-user. 
@@ -111,7 +115,7 @@ When defining a dataset, the following options are available:
 
 ### Datum
 
-The individual units that compose datasets are called datums. The canonical form of a datum is an object with a `value` property and a `tokens` property. `value` is the string that represents the underlying value of the datum and `tokens` is a collection of strings that aid typeahead.js in matching datums with a given query.
+The individual units that compose datasets are called datums. The canonical form of a datum is an object with a `value` property and a `tokens` property. `value` is the string that represents the underlying value of the datum and `tokens` is a collection of **single-word** strings that aid typeahead.js in matching datums with a given query.
 
 ```javascript
 {
@@ -189,9 +193,9 @@ typeahead.js triggers the following custom events:
 
 * `typeahead:closed` – Triggered when the dropdown menu of a typeahead is closed.
 
-* `typeahead:selected` – Triggered when a suggestion from the dropdown menu is explicitly selected. The datum for the selected suggestion is passed to the event handler as an argument.
+* `typeahead:selected` – Triggered when a suggestion from the dropdown menu is explicitly selected. The datum for the selected suggestion is passed to the event handler as an argument in addition to the name of the dataset it originated from.
 
-* `typeahead:autocompleted` – Triggered when the query is autocompleted. The datum used for autocompletion is passed to the event handler as an argument.
+* `typeahead:autocompleted` – Triggered when the query is autocompleted. The datum used for autocompletion is passed to the event handler as an argument in addition to the name of the dataset it originated from.
 
 All custom events are triggered on the element initialized as a typeahead.
 
@@ -347,7 +351,7 @@ Licensed under the MIT License
 <!-- links to third party projects -->
 [jasmine]: http://pivotal.github.com/jasmine/
 [grunt-cli]: https://github.com/gruntjs/grunt-cli
-[bower]: http://twitter.github.com/bower/
+[bower]: http://bower.io/
 [jQuery]: http://jquery.com/
 [jquery-ajax]: http://api.jquery.com/jQuery.ajax/
 [hogan.js]: http://twitter.github.com/hogan.js/
