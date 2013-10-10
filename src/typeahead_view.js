@@ -99,7 +99,7 @@ var TypeaheadView = (function() {
     .on('tabKeyed upKeyed downKeyed', this._managePreventDefault)
     .on('upKeyed downKeyed', this._moveDropdownCursor)
     .on('upKeyed downKeyed', this._openDropdown)
-    .on('tabKeyed leftKeyed rightKeyed', this._autocomplete);
+    .on('leftKeyed rightKeyed', this._autocomplete);
   }
 
   utils.mixin(TypeaheadView.prototype, EventTarget, {
@@ -201,9 +201,15 @@ var TypeaheadView = (function() {
 
     _handleSelection: function(e) {
       var byClick = e.type === 'suggestionSelected',
-          suggestion = byClick ?
-            e.data : this.dropdownView.getSuggestionUnderCursor();
-
+          suggestion;
+      if (byClick){
+        suggestion = e.data;
+      } else {
+        suggestion = this.dropdownView.getSuggestionUnderCursor();
+        if(!suggestion && e.type === 'tabKeyed'){
+          suggestion = this.dropdownView.getFirstSuggestion();
+        }
+      }
       if (suggestion) {
         this.inputView.setInputValue(suggestion.value);
 
@@ -239,13 +245,11 @@ var TypeaheadView = (function() {
     _autocomplete: function(e) {
       var isCursorAtEnd, ignoreEvent, query, hint, suggestion;
 
-      if (e.type === 'rightKeyed' || e.type === 'leftKeyed') {
-        isCursorAtEnd = this.inputView.isCursorAtEnd();
-        ignoreEvent = this.inputView.getLanguageDirection() === 'ltr' ?
-          e.type === 'leftKeyed' : e.type === 'rightKeyed';
+      isCursorAtEnd = this.inputView.isCursorAtEnd();
+      ignoreEvent = this.inputView.getLanguageDirection() === 'ltr' ?
+        e.type === 'leftKeyed' : e.type === 'rightKeyed';
 
-        if (!isCursorAtEnd || ignoreEvent) { return; }
-      }
+      if (!isCursorAtEnd || ignoreEvent) { return; }
 
       query = this.inputView.getQuery();
       hint = this.inputView.getHintValue();

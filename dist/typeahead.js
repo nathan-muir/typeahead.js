@@ -535,6 +535,7 @@
                         });
                     } else if (this.computed.length == 2) {
                         this.computed(query, processAsyncData);
+                        cb && cb(suggestions);
                         return;
                     } else {
                         $.error("the computed function must accept one or two arguments");
@@ -928,7 +929,7 @@
             this.inputView = new InputView({
                 input: $input,
                 hint: $hint
-            }).on("focused", this._openDropdown).on("blured", this._closeDropdown).on("blured", this._setInputValueToQuery).on("enterKeyed tabKeyed", this._handleSelection).on("queryChanged", this._clearHint).on("queryChanged", this._clearSuggestions).on("queryChanged", this._getSuggestions).on("whitespaceChanged", this._updateHint).on("queryChanged whitespaceChanged", this._openDropdown).on("queryChanged whitespaceChanged", this._setLanguageDirection).on("escKeyed", this._closeDropdown).on("escKeyed", this._setInputValueToQuery).on("tabKeyed upKeyed downKeyed", this._managePreventDefault).on("upKeyed downKeyed", this._moveDropdownCursor).on("upKeyed downKeyed", this._openDropdown).on("tabKeyed leftKeyed rightKeyed", this._autocomplete);
+            }).on("focused", this._openDropdown).on("blured", this._closeDropdown).on("blured", this._setInputValueToQuery).on("enterKeyed tabKeyed", this._handleSelection).on("queryChanged", this._clearHint).on("queryChanged", this._clearSuggestions).on("queryChanged", this._getSuggestions).on("whitespaceChanged", this._updateHint).on("queryChanged whitespaceChanged", this._openDropdown).on("queryChanged whitespaceChanged", this._setLanguageDirection).on("escKeyed", this._closeDropdown).on("escKeyed", this._setInputValueToQuery).on("tabKeyed upKeyed downKeyed", this._managePreventDefault).on("upKeyed downKeyed", this._moveDropdownCursor).on("upKeyed downKeyed", this._openDropdown).on("leftKeyed rightKeyed", this._autocomplete);
         }
         utils.mixin(TypeaheadView.prototype, EventTarget, {
             _managePreventDefault: function(e) {
@@ -992,7 +993,15 @@
                 }
             },
             _handleSelection: function(e) {
-                var byClick = e.type === "suggestionSelected", suggestion = byClick ? e.data : this.dropdownView.getSuggestionUnderCursor();
+                var byClick = e.type === "suggestionSelected", suggestion;
+                if (byClick) {
+                    suggestion = e.data;
+                } else {
+                    suggestion = this.dropdownView.getSuggestionUnderCursor();
+                    if (!suggestion && e.type === "tabKeyed") {
+                        suggestion = this.dropdownView.getFirstSuggestion();
+                    }
+                }
                 if (suggestion) {
                     this.inputView.setInputValue(suggestion.value);
                     byClick ? this.inputView.focus() : e.data.preventDefault();
@@ -1015,12 +1024,10 @@
             },
             _autocomplete: function(e) {
                 var isCursorAtEnd, ignoreEvent, query, hint, suggestion;
-                if (e.type === "rightKeyed" || e.type === "leftKeyed") {
-                    isCursorAtEnd = this.inputView.isCursorAtEnd();
-                    ignoreEvent = this.inputView.getLanguageDirection() === "ltr" ? e.type === "leftKeyed" : e.type === "rightKeyed";
-                    if (!isCursorAtEnd || ignoreEvent) {
-                        return;
-                    }
+                isCursorAtEnd = this.inputView.isCursorAtEnd();
+                ignoreEvent = this.inputView.getLanguageDirection() === "ltr" ? e.type === "leftKeyed" : e.type === "rightKeyed";
+                if (!isCursorAtEnd || ignoreEvent) {
+                    return;
                 }
                 query = this.inputView.getQuery();
                 hint = this.inputView.getHintValue();
