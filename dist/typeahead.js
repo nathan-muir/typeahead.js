@@ -996,7 +996,7 @@
                 var byClick = e.type === "suggestionSelected", suggestion;
                 if (byClick) {
                     suggestion = e.data;
-                } else {
+                } else if (this.dropdownView.isOpen) {
                     suggestion = this.dropdownView.getSuggestionUnderCursor();
                     if (!suggestion && e.type === "tabKeyed") {
                         suggestion = this.dropdownView.getFirstSuggestion();
