@@ -277,10 +277,11 @@ var Dataset = (function() {
           // argument; this can be used to avoid caching, or for queries that
           // cannot be used with the remote or local data options
           this.computed(query, processAsyncData);
-        
-          // if we have an async computed, then we do not want to also check 
-          // the cache logic below for calculating computed values; we 
+
+          // if we have an async computed, then we do not want to also check
+          // the cache logic below for calculating computed values; we
           // short-circuit right ot the procssAsyncData - there is no cache
+          cb && cb(suggestions)
           return
         } else {
           $.error('the computed function must accept one or two arguments');
