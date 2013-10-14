@@ -546,16 +546,17 @@
                 }
                 !cacheHit && cb && cb(suggestions);
                 function processAsyncData(data) {
-                    suggestions = suggestions.slice(0);
+                    originalSuggestions = suggestions.slice(0);
+                    newSuggestions = [];
                     utils.each(data, function(i, datum) {
                         var item = that._transformDatum(datum), isDuplicate;
-                        isDuplicate = utils.some(suggestions, function(suggestion) {
+                        isDuplicate = utils.some(newSuggestions.concat(originalSuggestions), function(suggestion) {
                             return item.value === suggestion.value;
                         });
-                        !isDuplicate && suggestions.push(item);
-                        return suggestions.length < that.limit;
+                        !isDuplicate && newSuggestions.push(item);
+                        return newSuggestions.length < that.limit;
                     });
-                    cb && cb(suggestions);
+                    cb && cb(newSuggestions);
                 }
             }
         });

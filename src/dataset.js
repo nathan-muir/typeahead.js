@@ -281,8 +281,8 @@ var Dataset = (function() {
           // if we have an async computed, then we do not want to also check
           // the cache logic below for calculating computed values; we
           // short-circuit right ot the procssAsyncData - there is no cache
-          cb && cb(suggestions)
-          return
+          cb && cb(suggestions);
+          return;
         } else {
           $.error('the computed function must accept one or two arguments');
         }
@@ -296,28 +296,26 @@ var Dataset = (function() {
       // because the rendering of local/remote suggestions is already
       // in the event loop
       !cacheHit && cb && cb(suggestions);
-
       // callback for transport.get
       function processAsyncData(data) {
-        suggestions = suggestions.slice(0);
-
+        originalSuggestions = suggestions.slice(0);
+        newSuggestions = [];
         // convert remote suggestions to object
         utils.each(data, function(i, datum) {
           var item = that._transformDatum(datum), isDuplicate;
 
           // checks for duplicates
-          isDuplicate = utils.some(suggestions, function(suggestion) {
-            return item.value === suggestion.value;
+          isDuplicate = utils.some(newSuggestions.concat(originalSuggestions), function(suggestion) {
+              return item.value === suggestion.value;
           });
 
-          !isDuplicate && suggestions.push(item);
+          !isDuplicate && newSuggestions.push(item);
 
           // if we're at the limit, we no longer need to process
           // the remote results and can break out of the each loop
-          return suggestions.length < that.limit;
+          return newSuggestions.length < that.limit;
         });
-
-        cb && cb(suggestions);
+        cb && cb(newSuggestions);
       }
     }
   });
