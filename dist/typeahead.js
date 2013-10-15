@@ -394,7 +394,7 @@
             this.computed = o.computed;
             this.itemHash = {};
             this.adjacencyList = {};
-            this.storage = o.name ? new PersistentStorage(o.name) : null;
+            this.storage = o.name && !o.disablePersistentStorage ? new PersistentStorage(o.name) : null;
         }
         utils.mixin(Dataset.prototype, {
             _processLocalData: function(data) {
@@ -528,13 +528,13 @@
                 terms = utils.tokenizeQuery(query);
                 suggestions = this._getLocalSuggestions(terms).slice(0, this.limit);
                 if (suggestions.length < this.limit && this.computed) {
-                    if (this.computed.length == 1) {
-                        utils.each(this.computed(query), function(i, datum) {
+                    if (this.computed.length < 3) {
+                        utils.each(this.computed(query, this.limit - suggestions.length), function(i, datum) {
                             suggestions.push(that._transformDatum(datum));
                             return suggestions.length < that.limit;
                         });
-                    } else if (this.computed.length == 2) {
-                        this.computed(query, processAsyncData);
+                    } else if (this.computed.length == 3) {
+                        this.computed(query, this.limit - suggestions.length, processAsyncData);
                         cb && cb(suggestions);
                         return;
                     } else {

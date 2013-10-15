@@ -44,7 +44,7 @@ var Dataset = (function() {
 
     // only initialize storage if there's a name otherwise
     // loading from storage on subsequent page loads is impossible
-    this.storage = o.name ? new PersistentStorage(o.name) : null;
+    this.storage = o.name && !o.disablePersistentStorage ? new PersistentStorage(o.name) : null;
   }
 
   utils.mixin(Dataset.prototype, {
@@ -267,16 +267,16 @@ var Dataset = (function() {
         // if the computed function takes one argument then we expect that
         // argument to be the query, and the function to synchronously return
         // suggestions
-        if (this.computed.length == 1) {
-          utils.each(this.computed(query), function(i, datum) {
+        if (this.computed.length < 3) {
+          utils.each(this.computed(query, this.limit - suggestions.length), function(i, datum) {
             suggestions.push(that._transformDatum(datum));
             return suggestions.length < that.limit;
           });
-        } else if (this.computed.length == 2) {
+        } else if (this.computed.length == 3) {
           // we have an asynchronous computed function that accepts a callback
           // argument; this can be used to avoid caching, or for queries that
           // cannot be used with the remote or local data options
-          this.computed(query, processAsyncData);
+          this.computed(query, this.limit - suggestions.length, processAsyncData);
 
           // if we have an async computed, then we do not want to also check
           // the cache logic below for calculating computed values; we
