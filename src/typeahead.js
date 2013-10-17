@@ -66,13 +66,13 @@
       }
     },
 
-    setQuery: function(query) {
+    setQuery: function(query, silent) {
       return this.each(setQuery);
 
       function setQuery() {
         var view = $(this).data(viewKey);
 
-        view && view.setQuery(query);
+        view && view.setQuery(query, silent);
       }
     }
   };

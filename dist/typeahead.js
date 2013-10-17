@@ -1047,12 +1047,12 @@
                 destroyDomStructure(this.$node);
                 this.$node = null;
             },
-            setQuery: function(query) {
+            setQuery: function(query, silent) {
                 this.inputView.setQuery(query);
-                this.inputView.setInputValue(query);
+                this.inputView.setInputValue(query, silent);
                 this._clearHint();
                 this._clearSuggestions();
-                this._getSuggestions();
+                !silent && this._getSuggestions();
             }
         });
         return TypeaheadView;
@@ -1142,11 +1142,11 @@
                     }
                 }
             },
-            setQuery: function(query) {
+            setQuery: function(query, silent) {
                 return this.each(setQuery);
                 function setQuery() {
                     var view = $(this).data(viewKey);
-                    view && view.setQuery(query);
+                    view && view.setQuery(query, silent);
                 }
             }
         };

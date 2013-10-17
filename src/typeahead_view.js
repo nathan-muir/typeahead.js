@@ -282,13 +282,13 @@ var TypeaheadView = (function() {
       this.$node = null;
     },
 
-    setQuery: function(query) {
+    setQuery: function(query, silent) {
       this.inputView.setQuery(query);
-      this.inputView.setInputValue(query);
+      this.inputView.setInputValue(query, silent);
 
       this._clearHint();
       this._clearSuggestions();
-      this._getSuggestions();
+      !silent && this._getSuggestions();
     }
   });
 
