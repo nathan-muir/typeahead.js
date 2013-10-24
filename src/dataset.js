@@ -298,24 +298,23 @@ var Dataset = (function() {
       !cacheHit && cb && cb(suggestions);
       // callback for transport.get
       function processAsyncData(data) {
-        originalSuggestions = suggestions.slice(0);
-        newSuggestions = [];
+        suggestions = suggestions.slice(0);
         // convert remote suggestions to object
         utils.each(data, function(i, datum) {
           var item = that._transformDatum(datum), isDuplicate;
 
           // checks for duplicates
-          isDuplicate = utils.some(newSuggestions.concat(originalSuggestions), function(suggestion) {
+          isDuplicate = utils.some(suggestions, function(suggestion) {
               return item.value === suggestion.value;
           });
 
-          !isDuplicate && newSuggestions.push(item);
+          !isDuplicate && suggestions.push(item);
 
           // if we're at the limit, we no longer need to process
           // the remote results and can break out of the each loop
-          return newSuggestions.length < that.limit;
+          return suggestions.length < that.limit;
         });
-        cb && cb(newSuggestions);
+        cb && cb(suggestions);
       }
     }
   });
