@@ -523,11 +523,15 @@
             getSuggestions: function(query, cb) {
                 var that = this, terms, suggestions, cacheHit = false;
                 if (query.length < this.minLength) {
-                    return;
+                    return false;
                 }
                 terms = utils.tokenizeQuery(query);
                 suggestions = this._getLocalSuggestions(terms).slice(0, this.limit);
-                if (suggestions.length < this.limit && this.computed) {
+                if (suggestions.length >= this.limit) {
+                    cb && cb(suggestions);
+                    return false;
+                }
+                if (this.computed) {
                     if (this.computed.length < 3) {
                         utils.each(this.computed(query, this.limit - suggestions.length), function(i, datum) {
                             suggestions.push(that._transformDatum(datum));
@@ -535,16 +539,17 @@
                         });
                     } else if (this.computed.length == 3) {
                         this.computed(query, this.limit - suggestions.length, processAsyncData);
-                        cb && cb(suggestions);
-                        return;
                     } else {
                         $.error("the computed function must accept one or two arguments");
                     }
-                }
-                if (suggestions.length < this.limit && this.transport) {
+                } else if (this.transport) {
                     cacheHit = this.transport.get(query, processAsyncData);
+                    if (cacheHit) {
+                        return false;
+                    }
                 }
-                !cacheHit && cb && cb(suggestions);
+                cb && cb(suggestions);
+                return true;
                 function processAsyncData(data) {
                     suggestions = suggestions.slice(0);
                     utils.each(data, function(i, datum) {
@@ -873,7 +878,9 @@
         var html = {
             wrapper: '<span class="twitter-typeahead"></span>',
             hint: '<input class="tt-hint" type="text" autocomplete="off" spellcheck="off" disabled>',
-            dropdown: '<span class="tt-dropdown-menu"></span>'
+            dropdown: '<span class="tt-dropdown-menu"></span>',
+            spinner: '<div class="tt-spinner" role="spinner"></div>',
+            spinnerIcon: '<div class="tt-spinner-icon"></div>'
         }, css = {
             wrapper: {
                 position: "relative",
@@ -897,6 +904,23 @@
                 left: "0",
                 zIndex: "100",
                 display: "none"
+            },
+            spinner: {
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                zIndex: "101",
+                display: "none"
+            },
+            spinnerIcon: {
+                width: "14px",
+                height: "14px",
+                border: "solid 2px transparent",
+                "border-top-color": "#29d",
+                "border-left-color": "#29d",
+                "border-radius": "10px",
+                "-webkit-animation": "tt-spinner 400ms linear infinite",
+                animation: "tt-spinner 400ms linear infinite"
             }
         };
         if (utils.isMsie()) {
@@ -1003,6 +1027,8 @@
                     }
                 }
                 if (suggestion) {
+                    this._spin(false);
+                    this.inputView.setQuery(suggestion.value);
                     this.inputView.setInputValue(suggestion.value);
                     byClick ? this.inputView.focus() : e.data.preventDefault();
                     byClick && utils.isMsie() ? utils.defer(this.dropdownView.close) : this.dropdownView.close();
@@ -1015,12 +1041,21 @@
                     return;
                 }
                 utils.each(this.datasets, function(i, dataset) {
-                    dataset.getSuggestions(query, function(suggestions) {
+                    var asyncResults, syncRun = true;
+                    asyncResults = dataset.getSuggestions(query, function(suggestions) {
                         if (query === that.inputView.getQuery()) {
+                            !syncRun && that._spin(false);
                             that.dropdownView.renderSuggestions(dataset, suggestions);
                         }
                     });
+                    syncRun = false;
+                    if (asyncResults) {
+                        that._spin(true);
+                    }
                 });
+            },
+            _spin: function(show) {
+                this.$node.find(".tt-spinner").toggle(show);
             },
             _autocomplete: function(e) {
                 var isCursorAtEnd, ignoreEvent, query, hint, suggestion;
@@ -1056,7 +1091,7 @@
         });
         return TypeaheadView;
         function buildDomStructure(input) {
-            var $wrapper = $(html.wrapper), $dropdown = $(html.dropdown), $input = $(input), $hint = $(html.hint);
+            var $wrapper = $(html.wrapper), $dropdown = $(html.dropdown), $input = $(input), $hint = $(html.hint), $spinner = $(html.spinner), $spinnerIcon = $(html.spinnerIcon);
             $wrapper = $wrapper.css(css.wrapper);
             $dropdown = $dropdown.css(css.dropdown);
             $hint.css(css.hint).css({
@@ -1082,7 +1117,9 @@
             try {
                 !$input.attr("dir") && $input.attr("dir", "auto");
             } catch (e) {}
-            return $input.wrap($wrapper).parent().prepend($hint).append($dropdown);
+            $spinner.css(css.spinner);
+            $spinnerIcon.css(css.spinnerIcon);
+            return $input.wrap($wrapper).parent().prepend($hint).prepend($spinner.append($spinnerIcon)).append($dropdown);
         }
         function destroyDomStructure($node) {
             var $input = $node.find(".tt-query");

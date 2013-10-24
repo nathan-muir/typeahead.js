@@ -256,14 +256,18 @@ var Dataset = (function() {
 
       // don't do anything until the minLength constraint is met
       if (query.length < this.minLength) {
-        return;
+        return false;
       }
 
       terms = utils.tokenizeQuery(query);
       suggestions = this._getLocalSuggestions(terms).slice(0, this.limit);
 
       // add any computed suggestions
-      if (suggestions.length < this.limit && this.computed) {
+      if (suggestions.length >= this.limit) {
+        cb && cb(suggestions);
+        return false;
+      }
+      if (this.computed){
         // if the computed function takes one argument then we expect that
         // argument to be the query, and the function to synchronously return
         // suggestions
@@ -281,21 +285,18 @@ var Dataset = (function() {
           // if we have an async computed, then we do not want to also check
           // the cache logic below for calculating computed values; we
           // short-circuit right ot the procssAsyncData - there is no cache
-          cb && cb(suggestions);
-          return;
+
         } else {
           $.error('the computed function must accept one or two arguments');
         }
-      }
-
-      if (suggestions.length < this.limit && this.transport) {
+      } else if (this.transport){
         cacheHit = this.transport.get(query, processAsyncData);
+        if(cacheHit){
+          return false;
+        }
       }
-
-      // if a cache hit occurred, skip rendering local suggestions
-      // because the rendering of local/remote suggestions is already
-      // in the event loop
-      !cacheHit && cb && cb(suggestions);
+      cb && cb(suggestions);
+      return true;
       // callback for transport.get
       function processAsyncData(data) {
         suggestions = suggestions.slice(0);

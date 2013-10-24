@@ -8,7 +8,9 @@ var TypeaheadView = (function() {
   var html = {
         wrapper: '<span class="twitter-typeahead"></span>',
         hint: '<input class="tt-hint" type="text" autocomplete="off" spellcheck="off" disabled>',
-        dropdown: '<span class="tt-dropdown-menu"></span>'
+        dropdown: '<span class="tt-dropdown-menu"></span>',
+        spinner: '<div class="tt-spinner" role="spinner"></div>',
+        spinnerIcon: '<div class="tt-spinner-icon"></div>'
       },
       css = {
         wrapper: {
@@ -34,6 +36,23 @@ var TypeaheadView = (function() {
           // TODO: should this be configurable?
           zIndex: '100',
           display: 'none'
+        },
+        spinner: {
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          zIndex: '101',
+          display: 'none'
+        },
+        spinnerIcon: {
+          width: '14px',
+          height: '14px',
+          border: 'solid 2px transparent',
+          'border-top-color': "#29d",
+          'border-left-color': "#29d",
+          'border-radius': '10px',
+          '-webkit-animation': 'tt-spinner 400ms linear infinite',
+          'animation': 'tt-spinner 400ms linear infinite'
         }
       };
 
@@ -211,6 +230,8 @@ var TypeaheadView = (function() {
         }
       }
       if (suggestion) {
+        this._spin(false);
+        this.inputView.setQuery(suggestion.value);
         this.inputView.setInputValue(suggestion.value);
 
         // if triggered by click, ensure the query input still has focus
@@ -233,15 +254,25 @@ var TypeaheadView = (function() {
       if (utils.isBlankString(query)) { return; }
 
       utils.each(this.datasets, function(i, dataset) {
-        dataset.getSuggestions(query, function(suggestions) {
+        var asyncResults, syncRun = true;
+        asyncResults = dataset.getSuggestions(query, function(suggestions) {
           // only render the suggestions if the query hasn't changed
           if (query === that.inputView.getQuery()) {
+            !syncRun && that._spin(false);
             that.dropdownView.renderSuggestions(dataset, suggestions);
           }
         });
+        syncRun = false;
+        if (asyncResults){
+          that._spin(true);
+        }
+
       });
     },
 
+    _spin: function(show){
+      this.$node.find('.tt-spinner').toggle(show);
+    },
     _autocomplete: function(e) {
       var isCursorAtEnd, ignoreEvent, query, hint, suggestion;
 
@@ -298,7 +329,9 @@ var TypeaheadView = (function() {
     var $wrapper = $(html.wrapper),
         $dropdown = $(html.dropdown),
         $input = $(input),
-        $hint = $(html.hint);
+        $hint = $(html.hint),
+        $spinner =$(html.spinner),
+        $spinnerIcon = $(html.spinnerIcon);
 
     $wrapper = $wrapper.css(css.wrapper);
     $dropdown = $dropdown.css(css.dropdown);
@@ -335,10 +368,16 @@ var TypeaheadView = (function() {
     // it does not like it one bit
     try { !$input.attr('dir') && $input.attr('dir', 'auto'); } catch (e) {}
 
+    $spinner
+      .css(css.spinner);
+    $spinnerIcon
+      .css(css.spinnerIcon);
+
     return $input
     .wrap($wrapper)
     .parent()
     .prepend($hint)
+    .prepend($spinner.append($spinnerIcon))
     .append($dropdown);
   }
 
