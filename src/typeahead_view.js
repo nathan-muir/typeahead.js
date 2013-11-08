@@ -110,6 +110,7 @@ var TypeaheadView = (function() {
     .on('queryChanged', this._clearHint)
     .on('queryChanged', this._clearSuggestions)
     .on('queryChanged', this._getSuggestions)
+    .on('queryChanged', this._propagateEvent)
     .on('whitespaceChanged', this._updateHint)
     .on('queryChanged whitespaceChanged', this._openDropdown)
     .on('queryChanged whitespaceChanged', this._setLanguageDirection)
